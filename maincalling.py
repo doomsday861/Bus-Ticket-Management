@@ -42,7 +42,7 @@ customerdb = '''CREATE TABLE IF NOT EXISTS CUSTOMER(
 );'''
 c.execute(driverd)
 c.execute(customerdb)
-c.execute('SELECT * FROM DRIVER')
+c.execute('SELECT * FROM CUSTOMER')
 print(c.fetchall())
 def startbar():
 	bar = ttk.Progressbar(root, orient = HORIZONTAL, length = 300, mode = 'determinate')
@@ -50,29 +50,42 @@ def startbar():
 	for x in range(5):
 		bar['value'] +=20
 		root.update_idletasks()
-		#time.sleep(1)
+		time.sleep(1)
 	bar.stop()
 	root.destroy()
 	intermediate()
 
-def cding(idn):
+def cding(ask,idn):
+		bar = ttk.Progressbar(ask, orient = HORIZONTAL, length = 300, mode = 'determinate')
+		bar.pack()
+		for x in range(3):
+			bar['value'] +=33
+			ask.update_idletasks()
+			time.sleep(1)
+		bar.stop()
 		check = int(idn.get())
 		print(type(check))
-		c.execute('''SELECT * FROM CUSTOMER WHERE TID = ?''',(check))
-		tdetail = c.fetchone()
+		c.execute('SELECT * FROM CUSTOMER WHERE TID = ?',(check,))
+		tdetail = c.fetchall()
 		if(len(tdetail)==0):
-			print("NO")
+			messagebox.showerror("Invalid", "THIS ID DOES NOT EXIST, PLEASE RECHECK OR CONTACT US!")
+			ask.destroy()
 		else:
-			print("yes")
+			c.execute('SELECT * FROM DRIVER WHERE rowid = ?',(tdetail[0][5]+1,))
+			ddetail = c.fetchall()
+			detailed = "Customer's Name "+str(tdetail[0][0])+"\n Seats Booked: "+str(tdetail[0][1])+"\n Driver's Name: "+str(ddetail[0][0])+"\n Driver's Phone Number: "+str(ddetail[0][1])+"\n TYPE: "+str(ddetail[0][3])+"\n Providers: "+str(ddetail[0][4])+"\n From: "+str(ddetail[0][6])+"\n Destination: "+str(ddetail[0][7])+"\n Arrival Time:"+str(ddetail[0][9])+":"+str(ddetail[0][10])+"\n Reaching Time: "+str(ddetail[0][11])+":"+str(ddetail[0][12])+"\n Journey Date: "+str(ddetail[0][13])+" "+str(ddetail[0][14])+" "+str(ddetail[0][15])+"\n PRICE :"+str(tdetail[0][3])
+			messagebox.showinfo("Customer Detail",detailed)
+			ask.destroy()
+
 
 def Checkdetails():
 	ask = Tk()
-	ask.geometry("200x70")
+	ask.geometry("200x90")
 	ask.title("ID ENTRY SCREEN")
 	Label(ask,text = "Enter your Ticket ID ").pack()
 	idn = Entry(ask)
 	idn.pack()
-	Button(ask, text = "CONFIRM",command = lambda:cding(idn)).pack()
+	Button(ask, text = "CONFIRM",command = lambda:cding(ask,idn)).pack()
 	
 
 def verify(ping,hehe,v,cusname,seats):
@@ -84,12 +97,23 @@ def verify(ping,hehe,v,cusname,seats):
 		ping.destroy()
 		messagebox.showerror("Insufficient Seats", "Not Enough Seats Available\nKindly check later.")
 	else:
-		c.execute('''UPDATE DRIVER SET CAPACITY = CAPACITY - ? WHERE rowid = ?''',(int(seats.get()), v))
+		c.execute('''UPDATE DRIVER SET CAPACITY = CAPACITY - ? WHERE rowid = ?''',(int(seats.get()), v+1))
+		print(seats.get())
 		conn.commit()
+		c.execute('SELECT * FROM DRIVER')
+		print(c.fetchall())
 		nono = random.randint(10000,100000)
 		naam = str(cusname.get())
 		booked_seats = int(seats.get())
-		c.execute("""SELECT * From CUSTOMER WHERE NAME = ? AND SEATS = ? AND PRICE = ? AND TID = ? AND DDID = ?""",(naam,booked_seats,int(table[v][8])*booked_seats,nono, v))
+		c.execute("""INSERT INTO CUSTOMER VALUES (?, ?, ?, ?, ?, ?)""",(naam,nono,booked_seats,int(table[v][8])*booked_seats,nono, v))
+		conn.commit()
+		bar = ttk.Progressbar(hehe, orient = HORIZONTAL, length = 300, mode = 'determinate')
+		bar.grid(row =3 ,column =0)
+		for x in range(3):
+			bar['value'] +=33
+			hehe.update_idletasks()
+			time.sleep(1)
+		bar.stop()
 		messagebox.showinfo("Ticket Confirmed", "Your Ticket Has Been Successfully Booked!\n Your Ticket ID is:"+str(nono)+"\n Keep your ID with you\nHappy Journey!")
 		hehe.destroy()
 		ping.destroy()
@@ -244,6 +268,10 @@ def printer(ping,namebox,addressbox,phonebox,ogname,bustypes,capacity_box,from_b
 	if not((len(bustypes.get())) and len(ogname.get()) and len(capacity_box.get()) and len(from_box.get()) and len(destination.get()) and len(pricet.get()) and len(time_h.get()) and len(time_m.get()) and len(atime_h.get()) and len(atime_m.get())):
 		messagebox.showerror("Details Not Filled", "Please Check All the Boxes and enter correct details")
 		ping.destroy()
+	elif str(from_box.get()).upper() == str(destination.get()):
+		messagebox.showerror("CANNOT BE SAME", "BOTH THE DESTINATIONS CANNOT BE SAME")
+		ping.destroy()
+
 	else:
 		enterdate = [(str(namebox.get()).upper(),str(phonebox.get()).upper(),str(addressbox.get()).upper(),str(bustypes.get()).upper(),str(ogname.get()).upper(),int(capacity_box.get()),str(from_box.get()).upper(),str(destination.get()).upper(),int(pricet.get()),int(time_h.get()),str(time_m.get()),int(atime_h.get()),str(atime_m.get()),int(ddate.get()),str(dmonth.get()),str(dyear.get()))]
 		print(enterdate)
