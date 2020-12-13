@@ -134,6 +134,13 @@ def confirmbook(ping,v):
 
 
 def search(ping,sourcev,targetv,availtypesv,datev,monthv,yearv):
+	bar = ttk.Progressbar(ping, orient = HORIZONTAL, length = 300, mode = 'determinate')
+	bar.grid(row =11 ,column =0)
+	for x in range(3):
+		bar['value'] +=33
+		ping.update_idletasks()
+		time.sleep(1)
+	bar.stop()
 	ping.destroy()
 	hehe = Tk()
 	hehe.title("Select Your Ride")
